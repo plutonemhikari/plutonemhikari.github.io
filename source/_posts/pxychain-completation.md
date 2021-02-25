@@ -6,11 +6,11 @@ abbrlink: 2241119764
 date: 2021-02-25 11:49:43
 ---
 
-proxychains是Linux下一款很好用的神器，终端运行的程序如需要代理，最方便的方法之一就是使用proxychains。但是proxychains有一个缺点就是默认状态下proxychains后面的命令无法自动补全。有的人的方法是利用`complete -c proxychains`，但是这样实际上达不到补全的效果，它只能补全一层命令，`proxychains`后面的第一个命令是可以补全的，但这个命令的参数就无法补全了，所以我们需要自行编写补全脚本。<!--more-->
+proxychains是Linux下一款很好用的终端代理神器，命令行运行的程序如需要代理，最便捷的方法之一就是使用proxychains。但是proxychains有一个缺点，默认状态下proxychains后面的命令无法自动补全。有的教程是利用`complete -c proxychains`，但这样实际上达不到补全的效果，它只能补全一层命令，也就是说，`proxychains`后面的第一个命令的名称是可以补全的，但这个命令后面接的子命令或参数就无法补全了，所以我们需要自行编写补全脚本。<!--more-->
 
 # 脚本
 
-proxychains的补全规则和sudo是类似的，我们可以参照sudo的补全脚本来写proxychains的补全脚本，最后得倒如下脚本：
+proxychains的补全规则和sudo是类似的，我们可以参照sudo的补全脚本来写proxychains的补全脚本，写出补全脚本的代码如下：
 
 ```shell
 # bash completion for proxychains4(1)                              -*- shell-script -*-
@@ -66,6 +66,6 @@ complete -F _proxychains proxychains
 
 # 结果
 
-![](/home/hyacinthe/Documents/projects/blog/plutonemhikari.github.io/source/images/pxychain.png)
+![](/images/pxychain.png)
 
-可以看到proxychains之后的命令可以真正的自动补全了。
+可以看到proxychains之后的命令可以真正地自动补全了。
