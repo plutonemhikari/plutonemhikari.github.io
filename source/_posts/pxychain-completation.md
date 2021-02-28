@@ -57,7 +57,7 @@ _proxychains()
         return
     fi
 } &&
-complete -F _proxychains proxychains
+complete -F _proxychains proxychains proxychains4
 
 # ex: filetype=sh
 ```
