@@ -1,6 +1,7 @@
 ---
 title: Hexo博客的next主题下使read more按扭跳转到从头阅读
 tags: blog
+date: 2021-02-03
 categories: Miscellaneous
 abbrlink: 9350604
 ---
