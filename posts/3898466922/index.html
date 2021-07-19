@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"plutonemhikari.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="曾经在初学C语言的时候，误以为指针和数组的本质是相同的，而且发现许多人都这么认为。后来对于计算机硬件和操作系统有了更深的了解，尤其是学了汇编和编译原理之后，对编程语言的深层的原理也更加熟悉，回过头来意识到，「C语言数组的本质是指针」这个命题是错误的。 数据类型的确定要厘清刚才的问题，可能需要先明晰，C语言当中声明变量时，变量的类型是如何确定的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C语言的数组与指针">
+<meta property="og:url" content="https://plutonemhikari.github.io/posts/3898466922/index.html">
+<meta property="og:site_name" content="Plutonem&#39;s Site">
+<meta property="og:description" content="曾经在初学C语言的时候，误以为指针和数组的本质是相同的，而且发现许多人都这么认为。后来对于计算机硬件和操作系统有了更深的了解，尤其是学了汇编和编译原理之后，对编程语言的深层的原理也更加熟悉，回过头来意识到，「C语言数组的本质是指针」这个命题是错误的。 数据类型的确定要厘清刚才的问题，可能需要先明晰，C语言当中声明变量时，变量的类型是如何确定的。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-07-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-19T14:34:30.909Z">
+<meta property="article:author" content="Plutonem Hikari">
+<meta property="article:tag" content="C&#x2F;C++">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://plutonemhikari.github.io/posts/3898466922/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>C语言的数组与指针 | Plutonem's Site</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Plutonem's Site</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://plutonemhikari.github.io/posts/3898466922/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Plutonem Hikari">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Plutonem's Site">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C语言的数组与指针
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2021-07-19 00:00:00 / Modified: 22:34:30" itemprop="dateCreated datePublished" datetime="2021-07-19T00:00:00+08:00">2021-07-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Miscellaneous/" itemprop="url" rel="index"><span itemprop="name">Miscellaneous</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>曾经在初学C语言的时候，误以为指针和数组的本质是相同的，而且发现许多人都这么认为。后来对于计算机硬件和操作系统有了更深的了解，尤其是学了汇编和编译原理之后，对编程语言的深层的原理也更加熟悉，回过头来意识到，「C语言数组的本质是指针」这个命题是错误的。</p>
+<h1 id="数据类型的确定"><a href="#数据类型的确定" class="headerlink" title="数据类型的确定"></a>数据类型的确定</h1><p>要厘清刚才的问题，可能需要先明晰，C语言当中声明变量时，变量的类型是如何确定的。<span id="more"></span>当然，对于简单的情况而言，比如<code>int a = 1</code>这样的，很显然，变量<code>a</code>的类型是<code>int</code>，但当声明变量的表达式更复杂的时候，比如<code>int (*p)[4]</code>这样的，要如何确定其类型呢？其实只需简单记住一句话：「C语言定义变量的类型，是由一个等式方程确定的」。</p>
+<p>就以这个例子来看，这个方程是</p>
+<script type="math/tex; mode=display">
+\mathrm{表达式(*p)[4]的类型 = int}</script><p>如此一来，我们便可以如解方程一般，一层一层剥开，得到<code>p</code>的类型：</p>
+<script type="math/tex; mode=display">
+\begin{align}
+\mathrm{(*p)\left[4\right]的类型}& = \mathrm{int}\\
+\mathrm{*p的类型}& = \mathrm{4个int类型变量组成的数组}\\
+\mathrm{p的类型}& = \mathrm{指向由4个int类型变量所组成数组的指针}
+\end{align}</script><p>更复杂的表达式可以依此类推。</p>
+<h1 id="「残缺」的数组类型"><a href="#「残缺」的数组类型" class="headerlink" title="「残缺」的数组类型"></a>「残缺」的数组类型</h1><p>关于数组与指针的困惑，可能部分要归因于C语言「残缺」的数组类型。根据前文所述，<code>int a[4]</code>这样一个表达式所定义的变量，是<code>a</code>，而<code>a</code>的类型，是由4个int类型变量组成的数组。数组这种数据类型上定义了哪些运算呢？相比于其他更简单的类型而言，那些简单的如<code>+</code>、<code>-</code>、<code>*</code>、<code>/</code>的运算符，都无法直接用于数组类型，而只能用于数组的元素，乃至于连赋值符号<code>=</code>都只能在声明并同时初始化的时候使用。用<code>int a[]</code>这样一个语句定义了数组<code>a</code>，然而这个标识符<code>a</code>，可以结合的运算符只有<code>&amp;</code>，<code>sizeof()</code>、<code>alignof()</code>——除非它不被当作数组对待。的确，数组名是可以与加号结合的，比如<code>*(a + 1)</code>与<code>a[1]</code>是等价的，但此处的数组名并不再表示一整个数组对象，而是被隐式类型转换，成了指向数组第一个元素的指针，而且是右值。<strong>剥离了隐式类型转换的障眼法，作为表示数组对象本身的数组名，只支持几种特定的运算。运算的「残缺」给隐式类型转换留下了空间，而数组名这样的双重身份，也容易使人误以为C语言数组就是指针。</strong></p>
+<p>当然，这里的「残缺」并非说这是C语言的错误，或者设计者考虑欠周到，C语言这样的设计与C语言自身的特质是紧密相关的，有其历史背景。其实把变量名转换成地址，这一点很有汇编的风格，汇编中变量名实际都是表示地址，而这种数组的写法其实也与汇编类似，数组元素<code>a[1]</code>甚至可以写成<code>1[a]</code>，因为加法是可交换的。</p>
+<h1 id="赋值的等号"><a href="#赋值的等号" class="headerlink" title="赋值的等号"></a>赋值的等号</h1><p>假如我们这样声明一个变量<code>int (*p)[4]</code>中新出现一个标识符<code>p</code>，它就是我们要定义的变量的名称，假如我们要在定义的同时初始化这个变量，写成类似<code>int (*p)[4] = 某表达式</code>的内容，中间的等号是赋值的意思，然而其作为等号的身份可能会给我们一种它是等式的暗示，然而究竟是谁的值等于等号右边的表达式，是我们新定义的变量<code>p</code>，还是<code>=</code>紧跟着的<code>(*p)[4]</code>呢？答案是前者，我们将等号右边的表达式赋值给我们新定义的变量<code>p</code>。</p>
+<p>倘若我们分别定义一个一维数组和一个指针：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> a[] = &#123;<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>&#125;;</span><br><span class="line"><span class="keyword">int</span> *p = &#123;<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>&#125;;</span><br></pre></td></tr></table></figure>
+<p>第二个会出错，因为这个声明只申请了一个<code>int *</code>类型的内存空间，而不会去申请容纳一个数组的空间。倘若我们对<code>a</code>赋值，也会出错，因为<code>a</code>是被隐式转换成了一个右值。我想这个也足够说明，<strong>数组名虽然可以被隐式转化为指向<code>int</code>类型对象的指针，但它本质还是一个数组，与指针不同。</strong></p>
+<h1 id="作为函数参数的数组"><a href="#作为函数参数的数组" class="headerlink" title="作为函数参数的数组"></a>作为函数参数的数组</h1><p>涉及到数组的隐式转换的还有作为函数的参数的时候。前文说过，数组不能直接被<code>=</code>赋值，除非是在声明的同时用<code>&#123;&#125;</code>括起来的列表来初始化（这种大括号并非是数组特有，不像有的编程语言是用括号来专门表示数组对象，并可以用于任意时候的赋值，C语言的这种列表则是用于初始化连续的内存空间，例如结构体对象也可以用这种列表初始化），而作为形参的数组，面临的正是被实参赋值的场景，所以会被隐式转换为指针变量。而且因为数组的地址空间由实参提供，所以也不需要再手动分配内存。如果形参是一维数组，会被转换为指向其元素类型的指针，如果是二维数组，会被转换为指向一维数组的指针，三维数组则被转换为指向二维数组的指针，依次类推。这里还有个容易陷入的误区，一维数组的数组名可以被隐式地转换为一级指针，但二维数组的数组名并不是被转换为二级指针（指向指针的指针），而是指向一维数组的一级指针（指向数组的指针），这也是一个体现数组与指针的区别之处。</p>
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><p><code>int (*p)[]</code>与<code>int *p[]</code>有什么区别，如何记忆？首先说结论，前者所声明的<code>p</code>是指向数组的指针，后者所声明的<code>p</code>是存储指针变量的数组。</p>
+<p>这里涉及到C语言运算符的结合方向、优先级，<code>*</code>是右结合的，<code>[</code>是左结合的，所以他们都是与<code>p</code>结合的，而<code>[</code>的优先级高于<code>*</code>。所以，如果不加小括号，<code>[]</code>就要比<code>*</code>更优先与<code>p</code>结合，判定其类型的过程就是：<code>*p[]</code>是整型，<code>p[]</code>是指向整型的指针，<code>p</code>是由指向整型的指针构成的数组；而对于<code>int (*p)[]</code>来说，<code>()</code>使<code>*</code>与<code>p</code>更优先结合，所以判定其类型的过程是：<code>(*p)[]</code>是整型，<code>*p</code>是整型元素的数组，<code>p</code>是指向整型元素数组的指针。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-C/" rel="tag"># C/C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/2241119764/" rel="prev" title="proxychains自动补全">
+      <i class="fa fa-chevron-left"></i> proxychains自动补全
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E7%A1%AE%E5%AE%9A"><span class="nav-number">1.</span> <span class="nav-text">数据类型的确定</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E3%80%8C%E6%AE%8B%E7%BC%BA%E3%80%8D%E7%9A%84%E6%95%B0%E7%BB%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">「残缺」的数组类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B5%8B%E5%80%BC%E7%9A%84%E7%AD%89%E5%8F%B7"><span class="nav-number">3.</span> <span class="nav-text">赋值的等号</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%9C%E4%B8%BA%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0%E7%9A%84%E6%95%B0%E7%BB%84"><span class="nav-number">4.</span> <span class="nav-text">作为函数参数的数组</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">5.</span> <span class="nav-text">其他</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Plutonem Hikari</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Plutonem Hikari</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
